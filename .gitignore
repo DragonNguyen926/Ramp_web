@@ -8,4 +8,3 @@ dist/
 server/.env
 frontend/.env
 frontend/.env.*
-.git.bak*
