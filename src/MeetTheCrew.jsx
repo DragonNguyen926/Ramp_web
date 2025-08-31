@@ -19,6 +19,8 @@ const MeetTheCrew = () => {
 
   const API_BASE = (() => {
     const base = import.meta?.env?.VITE_API_URL || 'http://localhost:5174'
+    console.log('VITE_API_URL from env:', import.meta?.env?.VITE_API_URL)
+    console.log('Selected API_BASE:', base)
     return base.endsWith('/') ? base.slice(0, -1) : base
   })()
 
