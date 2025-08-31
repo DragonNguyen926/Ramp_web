@@ -7,60 +7,74 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-/* ------------------------- DB POOL ------------------------- */
+/** ---------- DB Pool (Neon usually needs SSL) ---------- */
 if (!process.env.DATABASE_URL) {
-  console.error('❌ DATABASE_URL is not set in .env');
+  console.error('❌ DATABASE_URL is not set');
   process.exit(1);
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,   // e.g. postgres://USER:PASS@HOST/neondb?sslmode=require
-  ssl: { rejectUnauthorized: false },           // fine for Neon/dev
+  connectionString: process.env.DATABASE_URL,        // e.g. postgres://USER:PASS@HOST:5432/DB?sslmode=require
+  ssl: { rejectUnauthorized: false },                // okay for dev/Neon
 });
 
-/* ------------------------- APP SETUP ----------------------- */
+/** ---------- App ---------- */
 const app = express();
 const PORT = Number(process.env.PORT || 5174);
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
-app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+/** Allow comma-separated origins: CORS_ORIGIN="http://localhost:5173,https://your-frontend.vercel.app" */
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, cb) => {
+    // allow server-to-server (no origin) and any listed origin
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error('CORS blocked'), false);
+  },
+  credentials: true,
+}));
 app.use(cookieParser());
 app.use(express.json());
 
-/* ------------------------- ROOT / HEALTH ------------------- */
+/** ---------- Root ---------- */
 app.get('/', (_req, res) => res.send('API is working 🚀'));
 
-app.get('/health', async (_req, res) => {
+/** ---------- Liveness (for Render health check) ---------- */
+app.get('/healthz', (_req, res) => res.status(200).send('ok'));
+
+/** ---------- Readiness (DB check) ---------- */
+app.get('/readyz', async (_req, res) => {
   try {
-    const { rows } = await pool.query('SELECT now() AS now');
-    res.json({ ok: true, now: rows[0].now });
+    const { rows } = await pool.query('SELECT 1 AS ok');
+    res.json({ ok: true, db: rows[0].ok === 1 });
   } catch (e) {
-    console.error('[HEALTH]', e);
+    console.error('[READYZ]', e);
     res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
-/* ------------------------- MEMBERS API --------------------- */
-/**
- * Safe fields only; never return email/password.
- * Query params:
- *   - status=active|pending|...    (filters users.status)
- *   - q=<partial first_name match> (ILIKE)
- *   - limit=number                 (default 100, max 500)
- *
- * Returns:
- *   id, display_name, position, display_group (group name), bio, created_at
+/** ---------- Members API ----------
+ * Safe fields only.
+ * Query:
+ *   - status=active|pending|...
+ *   - q=partial first_name match
+ *   - team=group name (exact; case-insensitive). Use "All" to disable.
+ *   - limit (default 100, max 500), offset (default 0)
  */
 app.get('/api/members', async (req, res) => {
   try {
-    const { status, q } = req.query;
+    const { status, q, team } = req.query;
 
-    // limit guardrails
-    let lim = parseInt(req.query.limit, 10);
-    if (!Number.isFinite(lim) || lim <= 0) lim = 100;
-    if (lim > 500) lim = 500;
+    let limit = parseInt(req.query.limit, 10);
+    if (!Number.isFinite(limit) || limit <= 0) limit = 100;
+    if (limit > 500) limit = 500;
 
-    // dynamic WHERE with params
+    let offset = parseInt(req.query.offset, 10);
+    if (!Number.isFinite(offset) || offset < 0) offset = 0;
+
     const where = [];
     const params = [];
 
@@ -74,26 +88,31 @@ app.get('/api/members', async (req, res) => {
       where.push(`u.first_name ILIKE $${params.length}`);
     }
 
-    // LIMIT always last param
-    params.push(lim);
+    if (team && String(team).toLowerCase() !== 'all') {
+      params.push(String(team));
+      where.push(`g.name ILIKE $${params.length}`);
+    }
+
+    params.push(limit);
+    params.push(offset);
 
     const sql = `
       SELECT
         u.id,
-        u.first_name                  AS display_name,
-        u.position,                                          -- 👈 free-text portfolio position
-        COALESCE(g.name, '')          AS display_group,      -- 👈 human-friendly group name
+        u.first_name AS display_name,
+        COALESCE(NULLIF(TRIM(u.position), ''), u.role, 'Member') AS position,
+        g.name AS display_group,
         u.bio,
         u.created_at
       FROM public.users u
       LEFT JOIN public.groups g ON g.id = u.group_id
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ORDER BY u.created_at DESC NULLS LAST, u.id DESC
-      LIMIT $${params.length}
+      LIMIT $${params.length - 1}
+      OFFSET $${params.length}
     `;
 
     const { rows } = await pool.query(sql, params);
-    // never send sensitive fields
     res.json(rows);
   } catch (e) {
     console.error('[DB_ERROR /api/members]', e);
@@ -101,10 +120,10 @@ app.get('/api/members', async (req, res) => {
   }
 });
 
-/* ------------------------- 404 FALLBACK -------------------- */
+/** ---------- 404 ---------- */
 app.use((_req, res) => res.status(404).json({ error: 'NOT_FOUND' }));
 
-/* ------------------------- START --------------------------- */
+/** ---------- Start ---------- */
 app.listen(PORT, () => {
   console.log(`➡️  API listening on http://localhost:${PORT}`);
 });
