@@ -14,42 +14,55 @@ if (!process.env.DATABASE_URL) {
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,        // e.g. postgres://USER:PASS@HOST:5432/DB?sslmode=require
-  ssl: { rejectUnauthorized: false },                // okay for dev/Neon
+  connectionString: process.env.DATABASE_URL, // e.g. postgres://USER:PASS@HOST:5432/DB?sslmode=require
+  ssl: { rejectUnauthorized: false },         // okay for dev/Neon; set true if you manage certs
 });
 
 /** ---------- App ---------- */
 const app = express();
 const PORT = Number(process.env.PORT || 5174);
 
-/** Allow comma-separated origins: CORS_ORIGIN="http://localhost:5173,https://your-frontend.vercel.app" */
-const allowedOrigins = (process.env.CORS_ORIGIN || '')
+/** ---------- Robust CORS ----------
+ * Accept comma-separated origins in CORS_ORIGIN (no trailing slashes).
+ * Also allow Netlify preview subdomains: https://<hash>--rampcsub.netlify.app
+ */
+const normalize = (o) => (o || '').replace(/\/+$/, ''); // strip trailing slash(es)
+const envOrigins = (process.env.CORS_ORIGIN || '')
   .split(',')
-  .map(s => s.trim())
+  .map(s => normalize(s.trim()))
   .filter(Boolean);
 
-app.use(cors({
-  origin: (origin, cb) => {
-    // allow server-to-server (no origin) and any listed origin
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    return cb(new Error('CORS blocked'), false);
-  },
+const isNetlifyPreview = (origin) =>
+  /^https:\/\/[^.]+--rampcsub\.netlify\.app$/.test(normalize(origin));
+
+const isAllowedOrigin = (origin) => {
+  const o = normalize(origin);
+  return !o || envOrigins.includes(o) || isNetlifyPreview(o);
+};
+
+const corsOptions = {
+  origin: (origin, cb) => cb(null, isAllowedOrigin(origin)),
   credentials: true,
-}));
+};
+
+app.use(cors(corsOptions));
+// Respond to browser preflight requests
+app.options('*', cors(corsOptions));
+
 app.use(cookieParser());
 app.use(express.json());
 
 /** ---------- Root ---------- */
 app.get('/', (_req, res) => res.send('API is working 🚀'));
 
-/** ---------- Liveness (for Render health check) ---------- */
+/** ---------- Health (Render) ---------- */
 app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 
 /** ---------- Readiness (DB check) ---------- */
 app.get('/readyz', async (_req, res) => {
   try {
     const { rows } = await pool.query('SELECT 1 AS ok');
-    res.json({ ok: true, db: rows[0].ok === 1 });
+    res.json({ ok: true, db: rows[0]?.ok === 1 });
   } catch (e) {
     console.error('[READYZ]', e);
     res.status(500).json({ ok: false, error: String(e) });
@@ -58,10 +71,10 @@ app.get('/readyz', async (_req, res) => {
 
 /** ---------- Members API ----------
  * Safe fields only.
- * Query:
+ * Query params:
  *   - status=active|pending|...
- *   - q=partial first_name match
- *   - team=group name (exact; case-insensitive). Use "All" to disable.
+ *   - q=partial first_name ILIKE
+ *   - team=group name (case-insensitive). Use "All" (or omit) to disable.
  *   - limit (default 100, max 500), offset (default 0)
  */
 app.get('/api/members', async (req, res) => {
@@ -90,11 +103,15 @@ app.get('/api/members', async (req, res) => {
 
     if (team && String(team).toLowerCase() !== 'all') {
       params.push(String(team));
+      // case-insensitive exact match on group name
       where.push(`g.name ILIKE $${params.length}`);
     }
 
+    // add limit + offset as the last params
     params.push(limit);
     params.push(offset);
+    const limitIdx = params.length - 1;
+    const offsetIdx = params.length;
 
     const sql = `
       SELECT
@@ -108,8 +125,8 @@ app.get('/api/members', async (req, res) => {
       LEFT JOIN public.groups g ON g.id = u.group_id
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ORDER BY u.created_at DESC NULLS LAST, u.id DESC
-      LIMIT $${params.length - 1}
-      OFFSET $${params.length}
+      LIMIT $${limitIdx}
+      OFFSET $${offsetIdx}
     `;
 
     const { rows } = await pool.query(sql, params);

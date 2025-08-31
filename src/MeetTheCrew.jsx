@@ -325,9 +325,9 @@ const MeetTheCrew = () => {
         </div>
 
         <div className="hero">
-          <p className="hero-subtitle fade-in-up stagger-1">
-            The passionate students behind Roadrunner Advancing Modern Programming
-          </p>
+          <h1 className="hero-subtitle fade-in-up stagger-1">
+           Roadrunner Advancing Modern Programming
+          </h1>
         </div>
 
         <div className="scroll-indicator">
@@ -444,21 +444,21 @@ const MeetTheCrew = () => {
             </p>
           </div>
           <div className="contact-links fade-in-up stagger-1">
-            <a href="mailto:ramp@csub.edu" className="contact-link">
+          <a href="mailto:ramp@csub.edu" className="contact-link">
               <div className="contact-icon">✉️</div>
               <div>
                 <div style={{ fontWeight: 600 }}>Email</div>
-                <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>ramp@csub.edu</div>
+                <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>dnguyen71@csub.edu</div>
               </div>
             </a>
-            <a href="#" className="contact-link">
+            <a href="https://www.instagram.com/weare.ramp/" className="contact-link">
               <div className="contact-icon">💻</div>
               <div>
-                <div style={{ fontWeight: 600 }}>GitHub</div>
-                <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>github.com/ramp-csub</div>
+                <div style={{ fontWeight: 600 }}>Instagram</div>
+                <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>Follow Us On IG</div>
               </div>
             </a>
-            <a href="#" className="contact-link">
+            <a href="https://discord.com/invite/eAK5hxBcFq?fbclid=PAZXh0bgNhZW0CMTEAAaed07fcR9ZyfUmIkhfyzPJgTQ2oGeZemmIq_a9eoOA7PYyRBnlx-lq82dhPyw_aem_3FecAonBKW2AyhTCRc8jFg" className="contact-link">
               <div className="contact-icon">💬</div>
               <div>
                 <div style={{ fontWeight: 600 }}>Discord</div>

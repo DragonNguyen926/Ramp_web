@@ -279,9 +279,7 @@ export default function Landing() {
           <h1 className="hero-title" id="heroTitle" ref={heroTitleRef}>
             Roadrunner Advancing Modern Programming
           </h1>
-          <p className="hero-subtitle fade-in-up stagger-1">
-            CSUB students building real projects together.
-          </p>
+       
           <div className="hero-buttons fade-in-up stagger-2">
           <Link to="/meet-the-crew" className="btn btn-primary">Meet the Crew</Link>
           <a href="https://rampclub.netlify.app/" className="btn btn-secondary">
@@ -410,24 +408,17 @@ export default function Landing() {
               <div className="contact-icon">✉️</div>
               <div>
                 <div style={{ fontWeight: 600 }}>Email</div>
-                <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>ramp@csub.edu</div>
+                <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>dnguyen71@csub.edu</div>
               </div>
             </a>
-            <a href="#" className="contact-link">
+            <a href="https://www.instagram.com/weare.ramp/" className="contact-link">
               <div className="contact-icon">💻</div>
               <div>
-                <div style={{ fontWeight: 600 }}>GitHub</div>
-                <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>github.com/ramp-csub</div>
+                <div style={{ fontWeight: 600 }}>Instagram</div>
+                <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>Follow Us On IG</div>
               </div>
             </a>
-            <a href="#" className="contact-link">
-              <div className="contact-icon">💼</div>
-              <div>
-                <div style={{ fontWeight: 600 }}>LinkedIn</div>
-                <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>linkedin.com/company/ramp-csub</div>
-              </div>
-            </a>
-            <a href="#" className="contact-link">
+            <a href="https://discord.com/invite/eAK5hxBcFq?fbclid=PAZXh0bgNhZW0CMTEAAaed07fcR9ZyfUmIkhfyzPJgTQ2oGeZemmIq_a9eoOA7PYyRBnlx-lq82dhPyw_aem_3FecAonBKW2AyhTCRc8jFg" className="contact-link">
               <div className="contact-icon">💬</div>
               <div>
                 <div style={{ fontWeight: 600 }}>Discord</div>
