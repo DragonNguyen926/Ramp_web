@@ -1,4 +1,4 @@
-// server/index.js (or index.js if you moved it to repo root)
+// server/index.js
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -7,29 +7,29 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-/** ---------- DB Pool ---------- */
+/** ---------- DB Pool (Neon usually needs SSL) ---------- */
 if (!process.env.DATABASE_URL) {
   console.error('❌ DATABASE_URL is not set');
   process.exit(1);
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // postgres://USER:PASS@HOST:5432/DB?sslmode=require
-  ssl: { rejectUnauthorized: false },        // OK for Neon/Render; set true only if you manage certs
+  connectionString: process.env.DATABASE_URL, // e.g. postgres://USER:PASS@HOST:5432/DB?sslmode=require
+  ssl: { rejectUnauthorized: false },         // okay for dev/Neon; set true if you manage certs
 });
 
 /** ---------- App ---------- */
 const app = express();
-app.set('trust proxy', 1); // Render/Netlify behind proxy
 const PORT = Number(process.env.PORT || 5174);
 
-/** ---------- CORS ---------- */
-// Accept comma-separated origins in CORS_ORIGIN (no trailing slashes).
-// Also allow Netlify preview subdomains: https://<hash>--rampcsub.netlify.app
-const normalize = (o) => (o || '').replace(/\/+$/, '');
+/** ---------- Robust CORS ----------
+ * Accept comma-separated origins in CORS_ORIGIN (no trailing slashes).
+ * Also allow Netlify preview subdomains: https://<hash>--rampcsub.netlify.app
+ */
+const normalize = (o) => (o || '').replace(/\/+$/, ''); // strip trailing slash(es)
 const envOrigins = (process.env.CORS_ORIGIN || '')
   .split(',')
-  .map((s) => normalize(s.trim()))
+  .map(s => normalize(s.trim()))
   .filter(Boolean);
 
 const isNetlifyPreview = (origin) =>
@@ -41,15 +41,13 @@ const isAllowedOrigin = (origin) => {
 };
 
 const corsOptions = {
-  origin(origin, cb) {
-    if (isAllowedOrigin(origin)) return cb(null, true);
-    return cb(new Error(`Not allowed by CORS: ${origin}`));
-  },
+  origin: (origin, cb) => cb(null, isAllowedOrigin(origin)),
   credentials: true,
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // preflight
+// Respond to browser preflight requests
+app.options('*', cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.json());
@@ -63,15 +61,22 @@ app.get('/healthz', (_req, res) => res.status(200).send('ok'));
 /** ---------- Readiness (DB check) ---------- */
 app.get('/readyz', async (_req, res) => {
   try {
-    const { rows } = await pool.query('SELECT 1::int AS ok');
-    res.json({ ok: true, db: Number(rows[0]?.ok) === 1 });
+    const { rows } = await pool.query('SELECT 1 AS ok');
+    res.json({ ok: true, db: rows[0]?.ok === 1 });
   } catch (e) {
     console.error('[READYZ]', e);
     res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
-/** ---------- Members API ---------- */
+/** ---------- Members API ----------
+ * Safe fields only.
+ * Query params:
+ *   - status=active|pending|...
+ *   - q=partial first_name ILIKE
+ *   - team=group name (case-insensitive). Use "All" (or omit) to disable.
+ *   - limit (default 100, max 500), offset (default 0)
+ */
 app.get('/api/members', async (req, res) => {
   try {
     const { status, q, team } = req.query;
@@ -98,6 +103,7 @@ app.get('/api/members', async (req, res) => {
 
     if (team && String(team).toLowerCase() !== 'all') {
       params.push(String(team));
+      // case-insensitive exact match on group name
       where.push(`g.name ILIKE $${params.length}`);
     }
 
@@ -135,7 +141,7 @@ app.get('/api/members', async (req, res) => {
 app.use((_req, res) => res.status(404).json({ error: 'NOT_FOUND' }));
 
 /** ---------- Start ---------- */
-app.listen(PORT, () => {
-  console.log(`➡️  API listening on http://localhost:${PORT}`);
-  console.log('CORS allowlist:', envOrigins.length ? envOrigins : '(empty; preview + no-origin allowed)');
-});
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`➡️  API listening on port ${PORT}`);
+    console.log('   Allowed CORS origins:', envOrigins.length ? envOrigins : '(none / same-origin only)');
+  });
