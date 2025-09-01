@@ -60,7 +60,7 @@ const MeetTheCrew = () => {
     const API = `${API_BASE}/api/members`
     ;(async () => {
       try {
-        const res = await fetch(API, { credentials: 'include' })
+        const res = await fetch(API)
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
 
