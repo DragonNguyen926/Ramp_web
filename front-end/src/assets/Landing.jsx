@@ -233,9 +233,14 @@ export default function Landing() {
     <div>
       {/* NAV */}
       <nav className="navbar" ref={navbarRef}>
-        <div className="nav-brand">
-          <span className="nav-logo">RAMP</span>
-        </div>
+      <button
+      type="button"
+      className="nav-logo nav-logo-btn"
+      aria-label="Reload page"
+      onClick={() => window.location.reload()}
+    >
+      RAMPa
+    </button>
         <div className="nav-links" ref={navLinksRef}>
           <a href="#hero" className="nav-link">Home</a>
           <a href="#what-is-ramp" className="nav-link">About</a>
@@ -260,7 +265,7 @@ export default function Landing() {
             tabIndex={0}
             aria-label="Change theme"
           >
-            RAMP
+              Roadrunner Advancing Modern Programming
           </span>
         </div>
 
@@ -277,7 +282,7 @@ export default function Landing() {
 
         <div className="hero">
           <h1 className="hero-title" id="heroTitle" ref={heroTitleRef}>
-            Roadrunner Advancing Modern Programming
+            RAMP
           </h1>
        
           <div className="hero-buttons fade-in-up stagger-2">

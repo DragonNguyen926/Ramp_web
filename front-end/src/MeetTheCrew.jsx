@@ -326,11 +326,7 @@ const MeetTheCrew = () => {
           </span>
         </div>
 
-        <div className="hero">
-          <h1 className="hero-subtitle fade-in-up stagger-1">
-           Roadrunner Advancing Modern Programming
-          </h1>
-        </div>
+    
 
         <div className="scroll-indicator">
           <div className="scroll-dot"></div>
@@ -352,7 +348,7 @@ const MeetTheCrew = () => {
             title="Click to switch team"
             style={{ userSelect: 'none', cursor: groupBuckets.length>1 ? 'pointer' : 'default' }}
           >
-            Our Team — {currentTeamName}
+            {currentTeamName}
           </h2>
 
           <p className="section-description fade-in-up stagger-1">
