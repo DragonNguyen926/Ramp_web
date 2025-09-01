@@ -265,7 +265,7 @@ export default function Landing() {
             tabIndex={0}
             aria-label="Change theme"
           >
-              Roadrunner Advancing Modern Programming
+              RAMP
           </span>
         </div>
 
@@ -282,7 +282,7 @@ export default function Landing() {
 
         <div className="hero">
           <h1 className="hero-title" id="heroTitle" ref={heroTitleRef}>
-            RAMP
+            Roadrunner Advancing Modern Programming
           </h1>
        
           <div className="hero-buttons fade-in-up stagger-2">
