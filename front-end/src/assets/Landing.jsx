@@ -233,14 +233,9 @@ export default function Landing() {
     <div>
       {/* NAV */}
       <nav className="navbar" ref={navbarRef}>
-      <button
-      type="button"
-      className="nav-logo nav-logo-btn"
-      aria-label="Reload page"
-      onClick={() => window.location.reload()}
-    >
-      RAMPa
-    </button>
+      <div className="nav-brand">
+          <span className="nav-logo">RAMP</span>
+        </div>
         <div className="nav-links" ref={navLinksRef}>
           <a href="#hero" className="nav-link">Home</a>
           <a href="#what-is-ramp" className="nav-link">About</a>
