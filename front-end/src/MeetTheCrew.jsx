@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react'
-
+import { NavLink } from 'react-router-dom'
 const MeetTheCrew = () => {
   const constellationRef = useRef(null)
   const codeRainRef = useRef(null)
@@ -294,19 +294,17 @@ const MeetTheCrew = () => {
   return (
     <div>
       {/* NAV */}
-      <nav className="navbar" ref={navbarRef}>
-        <div className="nav-brand">
-          <span className="nav-logo">RAMP</span>
-        </div>
-        <div className="nav-links" ref={navLinksRef}>
-          <a href="/" className="nav-link">Home</a>
-          <a href="#crew" className="nav-link">Meet the Crew</a>
-          <a href="#contact" className="nav-link">Contact</a>
-        </div>
-        <div className="nav-toggle" ref={navToggleRef}>
-          <span></span><span></span><span></span>
-        </div>
-      </nav>
+   
+
+        <nav className="navbar" ref={navbarRef}>
+          <div className="nav-brand"><span className="nav-logo">RAMP</span></div>
+          <div className="nav-links" ref={navLinksRef}>
+            <NavLink to="/" className="nav-link" end>Home</NavLink>
+            <NavLink to="/ramp-crew" className="nav-link">Member Portfolio</NavLink>
+            <NavLink to="/meet-the-crew#contact" className="nav-link">Contact</NavLink>
+          </div>
+          <div className="nav-toggle" ref={navToggleRef}><span></span><span></span><span></span></div>
+        </nav>
 
       {/* HERO SECTION */}
       <section className="section" id="hero">
@@ -430,6 +428,8 @@ const MeetTheCrew = () => {
           </div>
         </div>
       </section>
+
+      
 
       {/* CONTACT SECTION */}
       <section className="section" id="contact">
