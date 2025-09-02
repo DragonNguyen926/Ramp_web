@@ -276,9 +276,6 @@ export default function Landing() {
         </div>
 
         <div className="hero">
-          <h1 className="hero-title" id="heroTitle" ref={heroTitleRef}>
-            Roadrunner Advancing Modern Programming
-          </h1>
        
           <div className="hero-buttons fade-in-up stagger-2">
           <Link to="/meet-the-crew" className="btn btn-primary">Meet the Crew</Link>
