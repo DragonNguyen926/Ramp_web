@@ -1,5 +1,14 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
+
+// Move API_BASE outside component to prevent re-render logs
+const getApiBase = () => {
+  const base = import.meta?.env?.VITE_API_URL || 'http://localhost:5174'
+  return base.endsWith('/') ? base.slice(0, -1) : base
+};
+
+const API_BASE = getApiBase();
+
 const MeetTheCrew = () => {
   const constellationRef = useRef(null)
   const codeRainRef = useRef(null)
@@ -8,7 +17,7 @@ const MeetTheCrew = () => {
   const navToggleRef = useRef(null)
   const rampCrewTextRef = useRef(null)
 
-  // Center cards when there’s no overflow
+  // Center cards when there's no overflow
   const crewScrollRef = useRef(null)
   const [centerCards, setCenterCards] = useState(false)
 
@@ -16,13 +25,6 @@ const MeetTheCrew = () => {
   const [crewMembers, setCrewMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  const API_BASE = (() => {
-    const base = import.meta?.env?.VITE_API_URL || 'http://localhost:5174'
-    console.log('VITE_API_URL from env:', import.meta?.env?.VITE_API_URL)
-    console.log('Selected API_BASE:', base)
-    return base.endsWith('/') ? base.slice(0, -1) : base
-  })()
 
   /* ================= THEME ================= */
   const cycleTheme = () => {
@@ -94,7 +96,7 @@ const MeetTheCrew = () => {
     })()
   }, [API_BASE])
 
-  /* ================= TEAM BUCKETS (includes “All Members”) ================= */
+  /* ================= TEAM BUCKETS (includes "All Members") ================= */
   const groupBuckets = useMemo(() => {
     const map = new Map()
     const canon = (s) => s.trim().toLowerCase()
@@ -294,8 +296,6 @@ const MeetTheCrew = () => {
   return (
     <div>
       {/* NAV */}
-   
-
         <nav className="navbar" ref={navbarRef}>
           <div className="nav-brand"><span className="nav-logo">RAMP</span></div>
           <div className="nav-links" ref={navLinksRef}>
@@ -324,7 +324,18 @@ const MeetTheCrew = () => {
           </span>
         </div>
 
-    
+        {/* ADDED BUTTON HERE - Similar to Landing Page */}
+        <div className="hero-buttons fade-in-up stagger-2" style={{ 
+          position: 'absolute', 
+          bottom: '120px', 
+          left: '50%', 
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: '20px',
+          zIndex: 10
+        }}>
+          <Link to="/ramp-crew" className="btn btn-primary">View Portfolios</Link>
+        </div>
 
         <div className="scroll-indicator">
           <div className="scroll-dot"></div>
@@ -336,7 +347,7 @@ const MeetTheCrew = () => {
         <div className="aurora-bg"></div>
 
         <div className="crew-container">
-          {/* Click to cycle teams (includes “All Members”) */}
+          {/* Click to cycle teams (includes "All Members") */}
           <h2
             className="section-title fade-in-up"
             role="button"
@@ -428,8 +439,6 @@ const MeetTheCrew = () => {
           </div>
         </div>
       </section>
-
-      
 
       {/* CONTACT SECTION */}
       <section className="section" id="contact">
